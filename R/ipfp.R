@@ -42,7 +42,7 @@
 ipfp <- function(y, A, x0,
     tol=sqrt(.Machine$double.eps), maxit=1e3, verbose=FALSE, full=FALSE) {
     # Get active rows
-    activeRows <- which(y > 0)
+    activeRows <- (y>0)
 
     # Zero inactive columns
     if ( any(y==0) ) {
@@ -51,10 +51,15 @@ ipfp <- function(y, A, x0,
         activeCols <- rep(TRUE, ncol(A))
     }
     x0[!activeCols] <- 0
-
+    allactive <- all(activeRows) && all(activeCols)
+    
+    yActive <- if(allactive || all(isactiveRow)) y else y[activeRows]
+    AActive <- if(allactive) A else A[activeRows, activeCols, drop=FALSE]
+    x0Active <- if(allactive || all(activeCols)) x0 else x0[activeCols]
+    
     # Run IPF
-    ans <- .Call("ipfp", y[activeRows], A[activeRows, activeCols, drop=FALSE],
-            dim(A[activeRows, activeCols, drop=FALSE]), x0[activeCols],
+    ans <- .Call("ipfp", yActive, AActive,
+            dim(AActive), x0Active,
             as.numeric(tol), as.integer(maxit), as.logical(verbose),
             PACKAGE='ipfp')
 
